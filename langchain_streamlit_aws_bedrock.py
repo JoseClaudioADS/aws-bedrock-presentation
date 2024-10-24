@@ -10,8 +10,8 @@ import streamlit as st
 from langchain_community.chat_message_histories import StreamlitChatMessageHistory
 
 #Configure streamlit app
-st.set_page_config(page_title="Consumidor Training Bot", page_icon="📖")
-st.title("📖 Consumidor Training Bot")
+st.set_page_config(page_title="Training Bot", page_icon="📖")
+st.title("📖 Training Bot")
 
 #Define convenience functions
 @st.cache_resource
@@ -30,28 +30,34 @@ def config_llm():
     return llm
 
 @st.cache_resource
-def config_vector_db(filename):
+def config_vector_db(filenames):
     client = boto3.client('bedrock-runtime')
     bedrock_embeddings = BedrockEmbeddings(client=client)
-    loader = PyPDFLoader(filename)
-    pages = loader.load_and_split()
-    vectorstore_faiss = FAISS.from_documents(pages, bedrock_embeddings)
+
+    all_pages = []
+    for filename in filenames:
+        loader = PyPDFLoader(filename)
+        pages = loader.load_and_split()
+        all_pages.extend(pages) 
+
+    vectorstore_faiss = FAISS.from_documents(all_pages, bedrock_embeddings)
     return vectorstore_faiss
 
 #Configuring the llm and vector store
 llm = config_llm()
-vectorstore_faiss = config_vector_db("manual_consumidor.pdf")
+pdf_files = ["instagram_terms.pdf"]
+vectorstore_faiss = config_vector_db(pdf_files)
 
 #Set up memory
 msgs = StreamlitChatMessageHistory(key="langchain_messages")
 if len(msgs.messages) == 0 :
-    msgs.add_ai_message("Como posso te ajudar?")
+    msgs.add_ai_message("How can I help you?")
 
 #Creating the template   
 my_template = """
 Human: 
-    Voce é um assistente conversacional desenhado para responder perguntas a uma pessoa. 
-    Voçê deve responder ao humano utilizando as informações abaixo. Inclua toda informação relevante, mas mantenha sua resposta curta e objetiva. Não diga coisas como "De acordo com o documento..." ou "Baseado no documento...".
+    You are a conversational assistant designed to help answer questions from an person. 
+    You should reply to the human's question using the information provided below. Include all relevant information but keep your answers short. Do not say things like "according to the training or handbook or based on or according to the information provided...".
 
 <Information>
 {info}
