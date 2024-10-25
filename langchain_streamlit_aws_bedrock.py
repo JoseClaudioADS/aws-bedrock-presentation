@@ -20,8 +20,8 @@ def config_llm():
 
     model_kwargs = { 
         "max_tokens_to_sample": 512,
-        "temperature":0.1,  
-        "top_p":1
+        "temperature":0.1,  # parameter used to control the level of creativity
+        "top_p":1 # parameter used to control the range of tokens
     }  
 
     model_id = "anthropic.claude-instant-v1"
